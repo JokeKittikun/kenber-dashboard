@@ -10,6 +10,8 @@ from gspread_pandas import Spread,Client
 from google.oauth2 import service_account
 import time
 from datetime import timedelta
+import folium
+from streamlit_folium import st_folium
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -73,6 +75,8 @@ def to_altair_datetime(dt):
 
 
 # Data Management
+mapObj = folium.Map(location=[21,21])
+
 df_project = pd.DataFrame(load_spreadsheet("Project"))
 
 df = pd.DataFrame(load_spreadsheet("Work Progress"))
@@ -83,7 +87,37 @@ df = df.merge(df_project, on='Project ID', how='left')
 
 project_name = str(df['Project Name'].min())
 
-st.write(project_name)
+
+
+
+
+# Map
+st.header('Header :blue[colors] Text :sunglasses:')
+st.subheader('Subheader :blue[colors] Text :sunglasses:')
+st.markdown("# Markdown 1")
+st.markdown("## Markdown 2")
+st.markdown("### Markdown 3")
+st.markdown("#### Markdown 4")
+st.markdown("##### Markdown 5")
+st.markdown("###### Markdown 6")
+st.text("Text")
+st.caption('Caption')
+
+st.divider()
+
+
+
+
+m = folium.Map(location=[13.736717, 100.523186], zoom_start=5)
+folium.Marker([13.736717, 100.523186], popup="XXXXXX", tooltip="XXXXX",
+            #   icon=folium.DivIcon(
+            #     html="""
+            #     <span>Test</span>
+            #     """
+            #   )
+              ).add_to(m)
+
+st_folium(m, width='100%', height=500, returned_objects=[])
 
 
 

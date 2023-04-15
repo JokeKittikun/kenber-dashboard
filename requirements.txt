@@ -1,0 +1,12 @@
+pandas
+numpy
+datetime
+streamlit
+altair
+ssl
+gspread_pandas
+google.oauth2
+time
+branca==0.3.1
+folium
+streamlit_folium
