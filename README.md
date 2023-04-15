@@ -2,7 +2,10 @@
 
 # Requirments.txt
 - pip install numpy --upgrade
+- pip install pandas --upgrade
 - pip install streamlit
+
+pip install gspread_pandas
 
 
 
