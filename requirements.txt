@@ -3,7 +3,7 @@ numpy
 datetime
 streamlit
 altair
-ssl
+# ssl
 gspread_pandas
 google.oauth2
 time
