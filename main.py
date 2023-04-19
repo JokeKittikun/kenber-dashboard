@@ -138,7 +138,7 @@ df_cal = df[df['Status'].notnull()]
 
 # Sliderbar
 
-image_logo = Image.open('img\Kenber Logo.png')
+image_logo = Image.open('img/Kenber Logo.png')
 
 st.sidebar.image(image_logo)
 
