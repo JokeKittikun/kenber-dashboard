@@ -5,7 +5,7 @@ streamlit
 altair
 # ssl
 gspread==5.8.0
-gspread-pandas
+gspread-pandas==3.2.2
 # google.oauth2
 google-auth==2.3.3
 google-auth-oauthlib==0.4.6
