@@ -39,7 +39,7 @@ st.set_page_config(layout = 'wide',
     })
 
 with open('style.css') as style_css:
-    st.markdown(f"<style>{style_css.read()}</style>", unsafe_allow_html = True)
+    st.markdown('<style>' + style_css.read() + '</style>', unsafe_allow_html=True)
 
 
 # Functions
