@@ -4,8 +4,11 @@ datetime
 streamlit
 altair
 # ssl
-gspread_pandas
+gspread==5.8.0
+gspread-pandas==3.2.2
 google.oauth2
+google-auth==2.3.3
+google-auth-oauthlib==0.4.6
 time
 branca==0.3.1
 folium
