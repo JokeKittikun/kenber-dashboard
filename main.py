@@ -5,9 +5,11 @@ from pandas import DataFrame
 import datetime
 import streamlit as st
 import altair as alt
-# import ssl
+import ssl
+# import gspread
 from gspread_pandas import Spread,Client
 from google.oauth2 import service_account
+
 import time
 from datetime import timedelta
 import folium
@@ -16,7 +18,7 @@ from PIL import Image
 
 
 
-# ssl._create_default_https_context = ssl._create_unverified_context
+ssl._create_default_https_context = ssl._create_unverified_context
 
 # Create a Google Authentication Connect Object
 scope = ['https://spreadsheets.google.com/feeds',
