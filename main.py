@@ -121,11 +121,7 @@ df = df.merge(df_project, on='Project ID', how='left')
 df = df.merge(df_boq[['BOQ ID', 'Title', 'Item', 'Unit']], on=["BOQ ID"], how="left")
 
 
-project_name = str(df['Project Name'].min())
-project_province = str(df['Province'].min())
-project_country = str(df['Country'].min())
 
-df_cal = df[df['Status'].notnull()]
 
 
 
@@ -224,7 +220,7 @@ if project_selected == "P0" :
 
     total_project = df_project['Project ID'].count() - 1
     total_project_finish = df_project['Project ID'][df_project['Overall Status'] == "Finish"].count()
-    total_project_ongoing = df_project['Project ID'][df_project['Overall Status'] == "On-Going"].count()
+    total_project_ongoing = df_project['Project ID'][df_project['Overall Status'] == "On-Going"].count() + df_project['Project ID'][df_project['Overall Status'] == "Delay"].count()
     total_project_unknow = df_project['Project ID'][df_project['Overall Status'] == ""].count() - 1
 
     col1.metric("Total Project", total_project,"")
@@ -273,7 +269,7 @@ if project_selected == "P0" :
     info_text = 'background-color:#cfe2f3; color:#0b5394; font-weight:; text-align:center!important'
     unknown_text = 'background-color:#eeeeee; color:#eeeeee;'
 
-    condition_status = lambda x : success_text if x == 'Finish' else (warning_text if x == 'On-Going' else unknown_text)
+    condition_status = lambda x : success_text if x == 'Finish' else (warning_text if x == 'On-Going' else (danger_text if x == 'Delay' else unknown_text))
     condition_remaining_days = lambda x : info_text if x > 0 else (unknown_text if np.isnan(x) else danger_text)
 
     table_project = df_project[['Project ID', 'Project Name','BOQ Type', 'Start', 'End', 'Remaining Days', 'Overall Status', '%Progress']]
@@ -309,6 +305,9 @@ if project_selected == "P0" :
 
 if project_selected in list(df['Project ID']):
 
+    project_name = str(df['Project Name'][df['Project ID'] == project_selected].min())
+    project_province = str(df['Province'][df['Project ID'] == project_selected].min())
+    project_country = str(df['Country'][df['Project ID'] == project_selected].min())
 
     # Top Row
     st.title("Dashboard")
@@ -385,12 +384,12 @@ if project_selected in list(df['Project ID']):
 
     newdf["Progress_"] = np.concatenate([np.ones(len(newdf)//2), np.zeros(len(newdf)//2), ])
 
-    newdf["Status"] = df['Status']
+    newdf["Status"] = newdf.merge(df, on='BOQ ID', how='left')['Status']
 
     newdf = newdf.merge(df_project, on="Project ID", how="left")
 
-    # st.write(newdf)
 
+  
 
 
 
@@ -418,14 +417,12 @@ if project_selected in list(df['Project ID']):
 
 
 
-
-
     range_ = ['#38761d', '#bcbcbc']
 
 
 
-    start_date_domain = start_date_proj - timedelta(days=10)
-    end_date_domain = end_date_proj + timedelta(days=10)
+    start_date_domain = start_date_proj - timedelta(days=30)
+    end_date_domain = max(end_date_proj, newdf["End Date"].max().date()) + timedelta(days=30)
 
     newdf['start_date_domain'] = start_date_domain
     newdf['end_date_domain'] = end_date_domain
@@ -440,7 +437,7 @@ if project_selected in list(df['Project ID']):
 
     
     newdf['BOQ List'] = newdf['BOQ Code'].astype(str) + "." + newdf['BOQ Item ID'].astype(str) + " " + newdf['Item'].astype(str)
-
+    
 
 
     label_colors = {
@@ -451,43 +448,53 @@ if project_selected in list(df['Project ID']):
 
 
 
+    
+    
+   
+    newdf = newdf.sort_values(['BOQ Code', 'BOQ Item ID'], ascending=[True, True]).reset_index()
+    del newdf['index']
+
+  
+
+    idx = newdf.index.values
+
 
 
 
     chart = alt.Chart(newdf).mark_bar(cornerRadius=3).encode(
         x=alt.X('Start Date',
                 axis = alt.Axis(grid=True, title="", labelOverlap=True, labelAngle=0, orient="bottom",
-                                gridOpacity=0.85,
+                                gridOpacity=0.35,
                                 offset=-10,
            
                                 ),
                 scale = alt.Scale(domain=domains)
                 ),
         x2='End Date',
-        y=alt.Y('BOQ List',
-                axis = alt.Axis(grid=True, labelAlign="left", labelLimit=150, labelPadding=150, title=""),
+        y=alt.Y('BOQ List', sort=idx,
+                axis = alt.Axis(grid=True, labelAlign="left", labelLimit=150, labelPadding=150, title="", gridOpacity=0.9),
                 ),
         tooltip=['Title', 'Item'],
         color=alt.Color('Progress_', scale=alt.Scale(range=range_), legend=None),
     )
 
     percent_boq = alt.Chart(newdf).mark_text(align='left', baseline='middle', dx=5, color="white", fontWeight="normal").encode(
-        y=alt.Y('BOQ List'),
+        y=alt.Y('BOQ List', sort=idx,),
         x=alt.X('Start Date'),
         text='Progress',
         tooltip=['Title', 'Item'],
     )
 
     start_date_text = alt.Chart(newdf[newdf["Status"].notnull()]).mark_text(
-        align='right', baseline='middle', color="grey", dx=-2, fontWeight="normal", fontSize=13).encode(
+        align='right', baseline='middle', color="grey", dx=-2, fontWeight="normal", fontSize=12).encode(
         x = alt.X('Start Date:T'),
         y = 'BOQ List',
         text = 'Start Date',
         tooltip = ['Start Date']
     )
 
-    end_date_text = alt.Chart(newdf[newdf["Status"].notnull()]).mark_text(
-        align='left', baseline='middle', color="grey", dx=2, fontWeight="normal", fontSize=13).encode(
+    end_date_text = alt.Chart(newdf[newdf['Progress_']==1]).mark_text(
+        align='left', baseline='middle', color="grey", dx=2, fontWeight="normal", fontSize=12).encode(
         x = alt.X('End Date:T'),
         y = 'BOQ List',
         text = 'End Date',
@@ -495,7 +502,7 @@ if project_selected in list(df['Project ID']):
     )
 
     status_text = alt.Chart(newdf[newdf["Status"].notnull()]).mark_text(align='left', baseline='middle', dx=0, color="black",  fontWeight="normal", fontSize=15).encode(
-        y=alt.Y('BOQ List'),
+        y=alt.Y('BOQ List', sort=idx,),
         x=alt.X('end_date_domain'),
         text='Status',
         tooltip=['BOQ ID', 'Title', 'Item', 'Status'],
@@ -507,11 +514,11 @@ if project_selected in list(df['Project ID']):
     today_date_line = alt.Chart(newdf).mark_rule(color="red").encode(
         x = 'Today',
         tooltip=['Today'],
-        size=alt.value(0.5),
+        size=alt.value(0.1),
     )
 
     today_date_label = alt.Chart(newdf).mark_text(
-        align='center', baseline='bottom', color="red", fontWeight="normal", fontSize=14
+        align='center', baseline='bottom', color="red", fontWeight="normal", fontSize=14, dy=-35
     ).encode(
         x=alt.X('Today:T'),
         y = alt.value(0),
@@ -519,7 +526,7 @@ if project_selected in list(df['Project ID']):
     )
 
     today_date_tag = alt.Chart(newdf).mark_text(
-        align='center', baseline='bottom', color="red", fontWeight="normal", fontSize=14, dy=-15, text="Today"
+        align='center', baseline='bottom', color="red", fontWeight="normal", fontSize=14, dy=-50, text="Today"
     ).encode(
         x=alt.X('Today:T'),
         y = alt.value(0),
@@ -573,13 +580,13 @@ if project_selected in list(df['Project ID']):
         size=alt.value(0.1),
     )
     update_date_label = alt.Chart(newdf[newdf["Status"].notnull()]).mark_text(
-        align='center', baseline='bottom', color="orange",  fontWeight="normal", fontSize=14).encode(
+        align='center', baseline='bottom', color="orange",  fontWeight="normal", fontSize=14, dy=-35).encode(
         x = alt.X('Last Update:T'),
         y = alt.value(0),
         text = 'Last Update'
     )
     update_date_tag = alt.Chart(newdf).mark_text(
-        align='center', baseline='bottom', color="orange", fontWeight="normal", fontSize=14, dy=-15, text="Last Update"
+        align='center', baseline='bottom', color="orange", fontWeight="normal", fontSize=14, dy=-50, text="Last Update"
     ).encode(
         x=alt.X('Last Update:T'),
         y = alt.value(0),
@@ -593,14 +600,13 @@ if project_selected in list(df['Project ID']):
 
 
     chart_all = alt.layer(
-                          start_date_text, end_date_text, 
-                          
+                          update_date_line, update_date_label, update_date_tag,
+
                           start_date_line, start_date_label, start_date_tag,
                           end_date_line, end_date_label, end_date_tag,
 
-                          chart, percent_boq, 
-
-                          update_date_line, update_date_label, update_date_tag,
+                          chart, percent_boq,
+                          start_date_text, end_date_text, 
 
                           today_date_line, today_date_label, today_date_tag,
                           status_text)
